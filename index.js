@@ -4,11 +4,34 @@ const heygen_API = {
   apiKey: 'NjQ0NTAzODM0NjEwNDRjM2EzNGU3M2IwYzVkZWI3YTItMTcxNjQwNTY0OQ==',
   serverUrl: 'https://api.heygen.com',
 };
-const taskInput = document.querySelector(".bar-wrapper input");
+
 const avatar = "";
 const voice = "";
 const apiKey = heygen_API.apiKey;
 const SERVER_URL = heygen_API.serverUrl;
+
+const messageBar = document.querySelector(".bar-wrapper input");
+const sendBtn = document.querySelector(".bar-wrapper button");
+const messageBox = document.querySelector(".message-box");
+
+
+sendBtn.onclick = function () {
+  if(messageBar.value.length > 0){
+    const UserTypedMessage = messageBar.value;
+    messageBar.value = "";
+
+    let message =
+    `<div class="chat message">
+    <img src="img/user.jpg">
+    <span>
+      ${UserTypedMessage}
+    </span>
+  </div>`;
+    messageBox.insertAdjacentHTML("beforeend", message);
+    talkHandler(UserTypedMessage);
+
+  }
+}
 
 if (apiKey === 'YourApiKey' || SERVER_URL === '') {
   alert('Please enter your API key and server URL in the api.json file');
@@ -33,7 +56,6 @@ async function createNewSession() {
   updateStatus('Creating new session... please wait');
   // call the new interface to get the server's offer SDP and ICE server to create a new RTCPeerConnection
   sessionInfo = await newSession('low', avatar, voice);
-  
   const { sdp: serverSdp, ice_servers2: iceServers } = sessionInfo;
 
   // Create a new RTCPeerConnection
@@ -127,17 +149,26 @@ async function repeatHandler() {
 
 
 async function talkHandler(message) {
+  
   if (!sessionInfo) {
     updateStatus('Please create a connection first');
     return;
   }
-  console.log(message);
   updateStatus('Talking to LLM... please wait');
 
   try {
     const text = await talkToOpenAI(message)
 
     if (text) {
+        let message =
+        `<div class="chat message">
+        <img src="img/chatbot.jpg">
+        <span>
+          ${text}
+        </span>
+      </div>`;
+      messageBox.insertAdjacentHTML("beforeend", message);
+      
       // Send the AI's response to Heygen's streaming.task API
       const resp = await repeat(sessionInfo.session_id, text);
       updateStatus('LLM response sent successfully');
@@ -149,6 +180,8 @@ async function talkHandler(message) {
     updateStatus('Error talking to AI');
   }
 }
+
+
 
 
 // when clicking the "Close" button, close the connection
@@ -383,7 +416,6 @@ mediaElement.onloadedmetadata = () => {
   mediaCanPlay = true;
   mediaElement.play();
 
-  showElement(bgCheckboxWrap);
 };
 createNewSession();
 
